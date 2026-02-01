@@ -7,11 +7,12 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@angular/build:application",
+      "executor": "@nx/angular:webpack-browser",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/shell",
-        "browser": "apps/shell/src/main.ts",
+        "outputPath": "dist/apps/shell/browser",
+        "index": "apps/shell/src/index.html",
+        "main": "apps/shell/src/main.ts",
         "tsConfig": "apps/shell/tsconfig.app.json",
         "inlineStyleLanguage": "scss",
         "assets": [
@@ -21,11 +22,9 @@
           }
         ],
         "styles": ["apps/shell/src/styles.scss"],
-        "server": "apps/shell/src/main.server.ts",
-        "ssr": {
-          "entry": "apps/shell/src/server.ts"
-        },
-        "outputMode": "server"
+        "customWebpackConfig": {
+          "path": "apps/shell/webpack.config.ts"
+        }
       },
       "configurations": {
         "production": {
@@ -41,19 +40,29 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "customWebpackConfig": {
+            "path": "apps/shell/webpack.prod.config.ts"
+          }
         },
         "development": {
+          "buildOptimizer": false,
           "optimization": false,
+          "vendorChunk": true,
           "extractLicenses": false,
-          "sourceMap": true
+          "sourceMap": true,
+          "namedChunks": true
         }
       },
       "defaultConfiguration": "production"
     },
     "serve": {
       "continuous": true,
-      "executor": "@angular/build:dev-server",
+      "executor": "@nx/angular:module-federation-dev-server",
+      "options": {
+        "port": 4200,
+        "publicHost": "http://localhost:4200"
+      },
       "configurations": {
         "production": {
           "buildTarget": "shell:build:production"
@@ -64,12 +73,14 @@
       },
       "defaultConfiguration": "development"
     },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "buildTarget": "shell:build"
+      }
+    },
     "lint": {
       "executor": "@nx/eslint:lint"
-    },
-    "test": {
-      "executor": "@angular/build:unit-test",
-      "options": {}
     },
     "serve-static": {
       "continuous": true,
@@ -77,9 +88,65 @@
       "options": {
         "buildTarget": "shell:build",
         "port": 4200,
-        "staticFilePath": "dist/apps/shell/browser",
         "spa": true
       }
+    },
+    "server": {
+      "dependsOn": ["build"],
+      "executor": "@nx/angular:webpack-server",
+      "options": {
+        "outputPath": "dist/apps/shell/server",
+        "main": "apps/shell/src/server.ts",
+        "tsConfig": "apps/shell/tsconfig.server.json",
+        "inlineStyleLanguage": "scss",
+        "customWebpackConfig": {
+          "path": "apps/shell/webpack.server.config.ts"
+        }
+      },
+      "configurations": {
+        "production": {
+          "outputHashing": "media"
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "sourceMap": true,
+          "extractLicenses": false
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve-ssr": {
+      "continuous": true,
+      "executor": "@nx/angular:module-federation-dev-ssr",
+      "configurations": {
+        "development": {
+          "browserTarget": "shell:build:development",
+          "serverTarget": "shell:server:development"
+        },
+        "production": {
+          "browserTarget": "shell:build:production",
+          "serverTarget": "shell:server:production"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "prerender": {
+      "executor": "@angular-devkit/build-angular:prerender",
+      "options": {
+        "routes": ["/"]
+      },
+      "configurations": {
+        "development": {
+          "browserTarget": "shell:build:development",
+          "serverTarget": "shell:server:development"
+        },
+        "production": {
+          "browserTarget": "shell:build:production",
+          "serverTarget": "shell:server:production"
+        }
+      },
+      "defaultConfiguration": "production"
     }
   }
 }
