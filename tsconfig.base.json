@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@ecommerce-suite/shared-ui": ["libs/shared/ui/src/index.ts"]
+      "@ecommerce-suite/shared-ui": ["libs/shared/ui/src/index.ts"],
+      "products/Routes": ["apps/products/src/app/remote-entry/entry.routes.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
